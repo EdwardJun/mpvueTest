@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "小摩豆会所",
+  "navigationBarBackgroundColor": "#d23c3a",
+  "navigationBarTextStyle":"#ffffff",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}
