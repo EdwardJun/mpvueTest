@@ -12,13 +12,14 @@ export default {
   name: 'navigationBar',
   data () {
     return {
-      navigationBarHeight: ''
+      navigationBarHeight: this.$store.state.navigationBarHeight
     }
   },
   created () {
-    let that = this
+    /* let that = this
     console.log('sys', that.$store.state.systemInfo.statusBarHeight)
     that.navigationBarHeight = that.$store.state.systemInfo.statusBarHeight + 46
+    that.$store.commit('setNavigationBarHeight', that.navigationBarHeight) */
   }
 }
 </script>
