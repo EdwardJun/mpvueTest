@@ -1,8 +1,11 @@
 <template>
   <div id="index-page">
     <navigation-bar></navigation-bar>
+    <div v-show="offsetTop > 0" class="refresh-wrap" :style="{height: navigationBarHeight + offsetTop + 'px'}">
+      <span>下拉刷新...</span>
+    </div>
     <scroll-view class="pageScrollView" id="pageScrollView" ref="pageScrollView" @touchstart="viewTouchStart" @longtap="viewLongTap" @touchmove="viewTouchMove" @touchend="viewTouchEnd" @touchscroll="viewTouchScroll" @touchupper="viewTouchUpper" 
-    style="white-space: norwrap;overflow: hidden;" :scroll-y="false" :style="{height: scrollViewHeight + 'px', marginTop: isScrollMove ? navigationBarHeight + offsetTop + 'px' :  navigationBarHeight + 'px'}">
+    style="white-space: norwrap;overflow: hidden;" :scroll-y="scrolly" :style="{height: scrollViewHeight + 'px', marginTop: isScrollMoving ? '' : navigationBarHeight + 'px'}"><!-- marginTop: isScrollMove ? navigationBarHeight + offsetTop + 'px' :  navigationBarHeight + 'px' -->
       <div class="view-div">
         <ul>
           <li>下拉刷新</li>
@@ -44,6 +47,8 @@
 <script>
 import card from '@/components/card'
 import navigationBar from '@/components/navigationBar'
+// import Global from '@/utils/global.js'
+// import {throttle} from '@/utils/util.js'
 
 export default {
   data () {
@@ -54,9 +59,10 @@ export default {
       navigationBarHeight: 0, // 导航栏的高度
       startPoint: {}, // 滚动元素的开始触摸点坐标对象
       curPoint: {}, // 滚动元素的当前触摸点坐标对象
-      isScrollMove: false, // 滚动元素是否可以滚动
+      isScrollMoving: false, // 滚动元素是否正在滚动
       scrolly: true,
-      scrollMoveDistance: 80 // 可滑动距离
+      scrollMoveDistance: 80, // 可滑动距离
+      _lastTime: 0
     }
   },
   components: {
@@ -94,7 +100,7 @@ export default {
       e.stopPropagation()
       e.preventDefault()
       let that = this
-      that.isScrollMove = true
+      // that.isScrollMoving = true
       that.startPoint.pageX = e.pageX.toFixed(3)
       that.startPoint.pageY = e.pageY.toFixed(3)
       console.log(that.startPoint)
@@ -117,33 +123,65 @@ export default {
       e.stopPropagation()
       e.preventDefault()
       let that = this
+      that.isScrollMoving = true
       that.curPoint.pageX = e.pageX.toFixed(3)
       that.curPoint.pageY = e.pageY.toFixed(3)
+      // 函数节流，10毫秒内只会触发一次
+      that.throttle(function () {
+        if (that.curPoint.pageY - that.startPoint.pageY < 0) {
+          that.offsetTop = 0
+          that.scrolly = true
+        } else if (that.curPoint.pageY - that.startPoint.pageY > that.scrollMoveDistance) {
+          return false
+        } else {
+          that.offsetTop = that.curPoint.pageY - that.startPoint.pageY
+          that.scrolly = false
+        }
+      }, 5)
       // that.offsetTop = (that.curPoint.pageY - that.startPoint.pageY) < 0 ? 0 : that.curPoint.pageY - that.startPoint.pageY
-      if (that.curPoint.pageY - that.startPoint.pageY < 0) {
-        that.offsetTop = 0
-        that.scrolly = true
-      } else if (that.curPoint.pageY - that.startPoint.pageY > that.scrollMoveDistance) {
-        return false
-      } else {
-        that.offsetTop = that.curPoint.pageY - that.startPoint.pageY
-        that.scrolly = false
-      }
       console.log('offsetTop', that.offsetTop)
     },
     viewLongTap (e) {
       console.log('longTap', e)
-      // let that = this
-      // that.isScrollMove = false
     },
     viewTouchEnd (e) {
       console.log('end', e)
+      let that = this
+      that.isScrollMove = true
+      console.log(that.scrollMoveDistance)
+      // 触摸结束后距离小于一定情况下会立即反弹
+      if (that.offsetTop + 10 < that.scrollMoveDistance) {
+        that.offsetTop = 0
+        that.scrolly = true
+        that.isScrollMoving = false
+      } else {
+        setTimeout(() => {
+          that.offsetTop = 0
+          that.scrolly = true
+          that.isScrollMoving = false
+        }, 1500)
+      }
     },
     viewTouchScroll (e) {
       console.log('scroll', e)
     },
     viewTouchUpper (e) {
       console.log('upper', e)
+    },
+    throttle (fn, gapTime) {
+      if (gapTime === null || gapTime === undefined) {
+        gapTime = 1500
+      }
+      console.log('gapTime---', gapTime)
+      let _lastTime = this._lastTime ? this._lastTime : null
+      let _nowTime = +new Date()
+      console.log('_lastTime', _lastTime)
+      console.log('_nowTime', _nowTime)
+      if (_nowTime - _lastTime > gapTime || !_lastTime) {
+        console.log('_nowTime大于500', _nowTime)
+        this._lastTime = _nowTime
+        fn()
+      }
     }
   }
 }
@@ -157,6 +195,9 @@ export default {
       .view-div {
         overflow: hidden;
       }
+    }
+    .refresh-wrap {
+      background-color: #ccc;
     }
   }
 </style>
