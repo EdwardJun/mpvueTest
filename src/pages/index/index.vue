@@ -2,7 +2,7 @@
   <div id="index-page">
     <navigation-bar></navigation-bar>
     <div v-show="offsetTop > 0" class="refresh-wrap" :style="{height: navigationBarHeight + offsetTop + 'px'}">
-      <span>下拉刷新...</span>
+      <span>下拉刷新22...</span>
     </div>
     <scroll-view class="pageScrollView" id="pageScrollView" ref="pageScrollView" @touchstart="viewTouchStart" @longtap="viewLongTap" @touchmove="viewTouchMove" @touchend="viewTouchEnd" @touchscroll="viewTouchScroll" @touchupper="viewTouchUpper" 
     style="white-space: norwrap;overflow: hidden;" :scroll-y="scrolly" :style="{height: scrollViewHeight + 'px', marginTop: isScrollMoving ? '' : navigationBarHeight + 'px'}"><!-- marginTop: isScrollMove ? navigationBarHeight + offsetTop + 'px' :  navigationBarHeight + 'px' -->
