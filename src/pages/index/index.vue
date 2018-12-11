@@ -1,17 +1,21 @@
 <template>
   <div id="index-page">
     <navigation-bar></navigation-bar>
-    <div v-show="offsetTop > 0" class="refresh-wrap" :style="{height: navigationBarHeight + offsetTop + 'px'}">
-      <span>下拉刷新...</span>
+    <div v-if="offsetTop > 0" class="refresh-wrap" :style="{marginTop: navigationBarHeight + 'px', height: offsetTop + 'px', lineHeight: offsetTop + 'px' }">
+      <span v-show="curPoint.pageY - startPoint.pageY <= 70">下拉刷新...</span>
+      <span v-show="curPoint.pageY - startPoint.pageY > 70">释放刷新...</span>
     </div>
     <scroll-view class="pageScrollView" id="pageScrollView" ref="pageScrollView" @touchstart="viewTouchStart" @longtap="viewLongTap" @touchmove="viewTouchMove" @touchend="viewTouchEnd" @touchscroll="viewTouchScroll" @touchupper="viewTouchUpper" 
-    style="white-space: norwrap;overflow: hidden;" :scroll-y="scrolly" :style="{height: scrollViewHeight + 'px', marginTop: isScrollMoving ? '' : navigationBarHeight + 'px'}"><!-- marginTop: isScrollMove ? navigationBarHeight + offsetTop + 'px' :  navigationBarHeight + 'px' -->
+    style="white-space: norwrap;overflow: hidden;" :scroll-y="scrolly" :style="{height: scrollViewHeight + 'px', marginTop: isScrollMoving && curPoint.pageY - startPoint.pageY > 0 ? '' : navigationBarHeight + 'px'}"><!-- marginTop: isScrollMove ? navigationBarHeight + offsetTop + 'px' :  navigationBarHeight + 'px' -->
+      <!-- <camera devicePosition="back" flash="off" style="width:100%; height: 300px"></camera> -->
+      <a href="/pages/counter/main">跳转到counter</a>
+      <a href="/pages/map/main">跳转到map</a>
       <div class="view-div">
         <ul>
-          <li>下拉刷新</li>
-          <li>下拉刷新</li>
-          <li>下拉刷新</li>
-          <li>下拉刷新</li>
+          <li>下拉刷新<button @click="doChooseImg()">选择图片</button></li>
+          <li>下拉刷新<img v-if="imgSrc" :src="imgSrc" alt="" mode="widthFix"></li>
+          <li>下拉刷新<button @click="doChooseImg22()">选择图片22222</button></li>
+          <li>下拉刷新<button @click="takePhoto()">相机333</button></li>
           <li>下拉刷新</li>
           <li>下拉刷新</li>
           <li>下拉刷新</li>
@@ -62,7 +66,9 @@ export default {
       isScrollMoving: false, // 滚动元素是否正在滚动
       scrolly: true,
       scrollMoveDistance: 80, // 可滑动距离
-      _lastTime: 0
+      _lastTime: 0,
+      imgSrc: '',
+      ctx: {}
     }
   },
   components: {
@@ -94,6 +100,9 @@ export default {
       wx.stopPullDownRefresh()
     }, 2000)
   }, */
+  onLoad () {
+    this.ctx = wx.createCameraContext()
+  },
   methods: {
     viewTouchStart (e) {
       console.log('start', e)
@@ -104,19 +113,6 @@ export default {
       that.startPoint.pageX = e.pageX.toFixed(3)
       that.startPoint.pageY = e.pageY.toFixed(3)
       console.log(that.startPoint)
-      /* that.$nextTick(() => {
-        console.log('refs', that.$refs.pageScrollView)
-        console.log(document.querySelector('.pageScrollView'))
-      }) */
-      /* wx.createSelectorQuery().select('#pageScrollView').fields({
-        dataset: true,
-        size: true,
-        scrollOffset: true,
-        properties: ['scrollX', 'scrollY'],
-        computedStyle: ['margin', 'backgroundColor']
-      }, function (res) {
-        console.log('res', res)
-      }).exec() */
     },
     viewTouchMove (e) {
       console.log('move', e)
@@ -128,6 +124,7 @@ export default {
       that.curPoint.pageY = e.pageY.toFixed(3)
       // 函数节流，10毫秒内只会触发一次
       that.throttle(function () {
+        console.log(that.curPoint.pageY - that.startPoint.pageY)
         if (that.curPoint.pageY - that.startPoint.pageY < 0) {
           that.offsetTop = 0
           that.scrolly = true
@@ -137,8 +134,7 @@ export default {
           that.offsetTop = that.curPoint.pageY - that.startPoint.pageY
           that.scrolly = false
         }
-      }, 5)
-      // that.offsetTop = (that.curPoint.pageY - that.startPoint.pageY) < 0 ? 0 : that.curPoint.pageY - that.startPoint.pageY
+      }, 2)
       console.log('offsetTop', that.offsetTop)
     },
     viewLongTap (e) {
@@ -168,21 +164,31 @@ export default {
     viewTouchUpper (e) {
       console.log('upper', e)
     },
+    // 函数节流
     throttle (fn, gapTime) {
       if (gapTime === null || gapTime === undefined) {
         gapTime = 1500
       }
-      console.log('gapTime---', gapTime)
       let _lastTime = this._lastTime ? this._lastTime : null
       let _nowTime = +new Date()
-      console.log('_lastTime', _lastTime)
-      console.log('_nowTime', _nowTime)
       if (_nowTime - _lastTime > gapTime || !_lastTime) {
-        console.log('_nowTime大于500', _nowTime)
         this._lastTime = _nowTime
         fn()
       }
     }
+    /* async doChooseImg () {
+      let that = this
+      let imgObj = await Global.wxChooseImage()
+      that.imgSrc = imgObj.tempFilePaths[0]
+    },
+    async doChooseImg22 () {
+      let that = this
+      let imgObj = await Global.wxShowActionSheet()
+      that.imgSrc = imgObj.tempFilePaths[0]
+    },
+    takePhoto () {
+      Global.wxCreateCameraContext(this.ctx)
+    } */
   }
 }
 </script>
@@ -197,7 +203,9 @@ export default {
       }
     }
     .refresh-wrap {
+      text-align: center;
       background-color: #ccc;
+      color: #ffffff;
     }
   }
 </style>
